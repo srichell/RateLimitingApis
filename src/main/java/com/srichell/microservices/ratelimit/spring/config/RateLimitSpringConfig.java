@@ -9,7 +9,6 @@ import com.srichell.microservices.ratelimit.data.utils.RateLimitS3DataStore;
 import com.srichell.microservices.ratelimit.interfaces.IAppState;
 import com.srichell.microservices.ratelimit.interfaces.IKeyValueDataCache;
 import com.srichell.microservices.ratelimit.interfaces.IPersistentDelimitedDataStore;
-import com.srichell.microservices.ratelimit.pojos.CityId;
 import com.srichell.microservices.ratelimit.pojos.RoomInfo;
 import com.srichell.microservices.ratelimit.rest.apis.AbstractRestResource;
 import com.srichell.microservices.ratelimit.rest.apis.RateLimitRestResource;
@@ -81,7 +80,7 @@ public class RateLimitSpringConfig {
         return rateLimitDataLoader;
     }
 
-    private IKeyValueDataCache<CityId,RoomInfo> getRateLimitDataCache() {
+    private IKeyValueDataCache<String,RoomInfo> getRateLimitDataCache() {
         return new RateLimitKeyValueCache();
     }
 

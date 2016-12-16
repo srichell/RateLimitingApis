@@ -1,5 +1,6 @@
 package com.srichell.microservices.ratelimit.rest.apis;
 
+import com.codahale.metrics.Timer;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.data.utils.RateLimitDataLoader;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Created by Sridhar Chellappa on 12/16/16.
@@ -28,12 +30,16 @@ public class RateLimitRestResource extends AbstractRestResource {
         this.rateLimitDataLoader = rateLimitDataLoader;
     }
 
-    public RateLimitAppState getRateLimitAppState() {
+    private RateLimitAppState getRateLimitAppState() {
         return rateLimitAppState;
     }
 
-    public RateLimitDataLoader getRateLimitDataLoader() {
+    private RateLimitDataLoader getRateLimitDataLoader() {
         return rateLimitDataLoader;
+    }
+
+    private static Logger getLOGGER() {
+        return LOGGER;
     }
 
     @Override
@@ -64,16 +70,40 @@ public class RateLimitRestResource extends AbstractRestResource {
 
     @GET
     @Path("/rooms")
-    public Response getRoomInfoById(
+    public void getRoomsByCity(
                 @Suspended final AsyncResponse asyncResponse,
                 @QueryParam("apikey")     String apiKey,
-                @QueryParam("city")     String searchQuery,
-                @QueryParam("id") String category,
+                @QueryParam("city")     String city,
+                @QueryParam("id") int hotelId,
                 @DefaultValue("false") @QueryParam("sort") boolean sort,
                 @DefaultValue("false") @QueryParam("sortOrder") String sortOrder
-            ) {
-
-        return null;
+            ) throws InterruptedException {
+        int numRetries = 0;
+        Timer.Context timer = getRateLimitAppState().getAppMetricRegistry().getFindHotelByCityIdQueryTime().time();
+        while(numRetries < MAX_RETRIES) {
+            try {
+                getRateLimitAppState().
+                        getThreadPoolManager().
+                        getByName(API_THREAD_POOL).
+                        execute(
+                                new FindHotelsWorkItem(
+                                        getRateLimitAppState(),
+                                        asyncResponse,
+                                        city, sort, sortOrder, timer)
+                        );
+                return;
+            } catch (RejectedExecutionException e) {
+                numRetries++;
+                if(numRetries >= MAX_RETRIES) {
+                    getRateLimitAppState().getAppMetricRegistry().getFindHotelErrorRate().mark();
+                    getRateLimitAppState().getAppMetricRegistry().getHttp5xxErrors().inc();
+                    timer.stop();
+                    throw(e);
+                }
+                getLOGGER().error("updateDriverPosition() : Caught RejectedExecutionException. Retrying {} of {} ", numRetries, MAX_RETRIES);
+                Thread.sleep(0l);
+            }
+        }
     }
 
 

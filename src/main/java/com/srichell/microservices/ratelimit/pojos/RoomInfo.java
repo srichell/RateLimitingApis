@@ -4,10 +4,12 @@ package com.srichell.microservices.ratelimit.pojos;
  * Created by Sridhar Chellappa on 12/16/16.
  */
 public class RoomInfo {
+    private final long hotelId;
     private final RoomType roomType;
     private final float price;
 
-    public RoomInfo(String roomType, float price) {
+    public RoomInfo(long hotelId, String roomType, float price) {
+        this.hotelId = hotelId;
         this.roomType = RoomType.getByType(roomType);
         this.price = price;
     }
