@@ -1,7 +1,7 @@
 package com.srichell.microservices.ratelimit.interfaces;
 
 import com.srichell.microservices.ratelimit.multithreading.ThreadPoolManager;
-import com.srichell.microservices.ratelimit.spring.config.constants.CommonBeanNames;
+import com.srichell.microservices.ratelimit.spring.constants.CommonBeanNames;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 

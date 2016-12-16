@@ -9,7 +9,7 @@ import com.srichell.microservices.ratelimit.interfaces.IAppState;
 import com.srichell.microservices.ratelimit.metrics.AbstractMetricsRegistry;
 import com.srichell.microservices.ratelimit.rest.apis.AbstractRestResource;
 import com.srichell.microservices.ratelimit.rest.apis.RestResources;
-import com.srichell.microservices.ratelimit.spring.config.constants.CommonBeanNames;
+import com.srichell.microservices.ratelimit.spring.constants.CommonBeanNames;
 import io.dropwizard.Application;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;

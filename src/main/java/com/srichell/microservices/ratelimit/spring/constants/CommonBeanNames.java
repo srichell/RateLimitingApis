@@ -1,4 +1,4 @@
-package com.srichell.microservices.ratelimit.spring.config.constants;
+package com.srichell.microservices.ratelimit.spring.constants;
 
 /**
  * Created by Sridhar Chellappa on 12/16/16.
