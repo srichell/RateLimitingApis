@@ -64,7 +64,7 @@ public class RateLimitMetricRegistry extends AbstractMetricsRegistry {
                 getCodahaleMetricRegistry().counter(formatNameWithHost("counter", "http.errors.4xx"))
         ).
         setHttp5xxErrors(
-                getCodahaleMetricRegistry().counter(formatNameWithHost("counter", "finddriver.http.errors.5xx"))
+                getCodahaleMetricRegistry().counter(formatNameWithHost("counter", "ratelimit.http.errors.5xx"))
         );
 
     }

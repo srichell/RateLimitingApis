@@ -12,6 +12,7 @@ import com.srichell.microservices.ratelimit.interfaces.IPersistentDelimitedDataS
 import com.srichell.microservices.ratelimit.pojos.CityId;
 import com.srichell.microservices.ratelimit.pojos.RoomInfo;
 import com.srichell.microservices.ratelimit.rest.apis.AbstractRestResource;
+import com.srichell.microservices.ratelimit.rest.apis.RateLimitRestResource;
 import com.srichell.microservices.ratelimit.rest.apis.RestResources;
 import com.srichell.microservices.ratelimit.spring.constants.CommonBeanNames;
 import com.srichell.microservices.ratelimit.spring.constants.RateLimitBeanNames;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 @Configuration
 @Profile(RateLimitBeanNames.RATE_LIMIT_SPRING_PROFILE_NAME)
-@ComponentScan({ "com.target..microservices.facetranking.*" })
+@ComponentScan({ "com.srichell.microservices.ratelimit.*" })
 public class RateLimitSpringConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitSpringConfig.class);
     private static final int HOTEL_DB_CONFIG_INDEX = 0;

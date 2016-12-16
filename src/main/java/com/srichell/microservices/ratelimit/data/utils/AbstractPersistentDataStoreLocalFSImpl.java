@@ -19,7 +19,6 @@ import java.nio.file.StandardOpenOption;
  */
 public abstract class AbstractPersistentDataStoreLocalFSImpl implements IPersistentDelimitedDataStore {
     private DataConfig dataConfig;
-    private BufferedReader bufferedReader = null;
 
     public AbstractPersistentDataStoreLocalFSImpl() {
         getLogger().info("Using Local File System as the Persistent Data Store");
@@ -56,17 +55,16 @@ public abstract class AbstractPersistentDataStoreLocalFSImpl implements IPersist
 
     @Override
     public BufferedReader getBufferedReader() throws DataReadException {
-        if(bufferedReader == null) {
-            this.bufferedReader = new BufferedReader(
-                    new InputStreamReader(
-                            getInputStream()
-                    )
-            );
-            if (this.bufferedReader == null) {
-                throw new DataReadException("Error Creating Buffered Reader for " + getPath().toString());
-            }
+        BufferedReader bufferedReader = new BufferedReader(
+                new InputStreamReader(
+                        getInputStream()
+                )
+        );
+        if (bufferedReader == null) {
+            throw new DataReadException("Error Creating Buffered Reader for " + getPath().toString());
         }
-        return this.bufferedReader;
+
+        return bufferedReader;
     }
 
     private InputStream getInputStream() throws DataReadException {

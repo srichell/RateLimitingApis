@@ -9,7 +9,7 @@ import org.springframework.context.annotation.*;
  */
 @Configuration
 @Profile(CommonBeanNames.COMMON_SPRING_PROFILE_NAME)
-@ComponentScan({ "com.srichell.microservices.whereismydriver.*" })
+@ComponentScan({ "com.srichell.microservices.ratelimit.*" })
 public class CommonSpringConfig {
 
     @Bean(name = CommonBeanNames.APP_HEALTH_CHECK_REGISTRY)

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.*;
  */
 @Configuration
 @Profile(CommonBeanNames.DEFAULT_HEALTH_CHECK_PROFILE_NAME)
-@ComponentScan({ "com.srichell.microservices.*" })
+@ComponentScan({ "com.srichell.microservices.ratelimit.*" })
 public class DefaultHealthCheckSpringConfig {
     @Bean(name = CommonBeanNames.APP_HEALTHCHECKER)
     @Scope("singleton")
