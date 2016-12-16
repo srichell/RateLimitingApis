@@ -113,7 +113,7 @@ public abstract class AbstractApp<T extends AbstractAppConfig> extends Applicati
         beanFactory.registerBeanDefinition(CommonBeanNames.APP_METRIC_REGISTRY, metricsBeanDefinition);
 
 
-        return beanFactory;
+        return registerCustomBeans(beanFactory, appConfiguration);
     }
 
 

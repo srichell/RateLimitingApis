@@ -33,9 +33,8 @@ dataConfigs:
     #dataSourceType: s3
     localConfig:
       localDir: /tmp
-      localFileName: hotelsDB
+      localFileName: hoteldb.csv
     s3Config: null
-
 
 
 rateLimitConfigs:
@@ -44,15 +43,6 @@ rateLimitConfigs:
     requestsPerMinute: 1
     rateViolationPenaltyMinutes: 5
 
-
-    private String blessedApiKey;
-
-    @JsonProperty
-    private String rateLimitAlgorithm;
-
-    @JsonProperty
-    private int requestsPerMinute;
-rateLimitAlgorithm: TokenBucket
 
 server:
   applicationConnectors:

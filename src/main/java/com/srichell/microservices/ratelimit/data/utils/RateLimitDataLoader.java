@@ -32,7 +32,7 @@ public class RateLimitDataLoader extends AbstractKeyValueDataLoader<String, Room
 
     @Override
     public Logger getLogger() {
-        return null;
+        return LOGGER;
     }
 
     @Override
