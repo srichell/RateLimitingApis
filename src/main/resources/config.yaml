@@ -36,6 +36,7 @@ dataConfigs:
       localFileName: hotelsDB
     s3Config: null
 
+rateLimitAlgorithm: TokenBucket
 
 server:
   applicationConnectors:

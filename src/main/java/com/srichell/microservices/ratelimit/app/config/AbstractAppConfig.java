@@ -57,6 +57,12 @@ public abstract class AbstractAppConfig extends Configuration implements IAppCon
     @JsonProperty
     private String metricsClass;
 
+    /*
+     * Nothing to add here. Defaults are as good
+     */
+    @JsonProperty
+    List<DataConfig> dataConfigs;
+
 
     @Override
     public String toString() {
@@ -67,19 +73,21 @@ public abstract class AbstractAppConfig extends Configuration implements IAppCon
                 ", threadPoolConfigList=" + threadPoolConfigList +
                 ", appConfigClass='" + appConfigClass + '\'' +
                 ", metricsClass='" + metricsClass + '\'' +
+                ", dataConfigs=" + dataConfigs +
                 '}';
     }
 
     /*
-     * Copy Constructor. Make sure this gets called from the sub class
-     */
+         * Copy Constructor. Make sure this gets called from the sub class
+         */
     public AbstractAppConfig(AbstractAppConfig that) {
         this.setSpringProfileNames(that.getSpringProfileNames()).
                 setSpringProfileClasses(that.getSpringProfileClasses()).
                 setAppConfigClass(that.getAppConfigClass()).
                 setMetricsClass(that.getMetricsClass()).
                 setThreadPoolEnabled(that.isThreadPoolEnabled()).
-                setThreadPoolConfigs(that.getThreadPoolConfigs());
+                setThreadPoolConfigs(that.getThreadPoolConfigs()).
+                setDataConfigs(that.getDataConfigs());
     }
 
     public AbstractAppConfig() {
@@ -152,4 +160,12 @@ public abstract class AbstractAppConfig extends Configuration implements IAppCon
         return this;
     }
 
+    public List<DataConfig> getDataConfigs() {
+        return dataConfigs;
+    }
+
+    public AbstractAppConfig setDataConfigs(List<DataConfig> dataConfigs) {
+        this.dataConfigs = dataConfigs;
+        return this;
+    }
 }
