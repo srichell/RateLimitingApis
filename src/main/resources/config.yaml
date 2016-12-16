@@ -36,6 +36,22 @@ dataConfigs:
       localFileName: hotelsDB
     s3Config: null
 
+
+
+rateLimitConfigs:
+  - blessedApiKey: abcd
+    rateLimitAlgorithm: TokenBucket
+    requestsPerMinute: 1
+    rateViolationPenaltyMinutes: 5
+
+
+    private String blessedApiKey;
+
+    @JsonProperty
+    private String rateLimitAlgorithm;
+
+    @JsonProperty
+    private int requestsPerMinute;
 rateLimitAlgorithm: TokenBucket
 
 server:

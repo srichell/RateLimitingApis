@@ -1,9 +1,16 @@
 package com.srichell.microservices.ratelimit.spring.config;
 
 import com.srichell.microservices.ratelimit.app.config.DataConfig;
+import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.data.utils.RateLimitDataLoader;
+import com.srichell.microservices.ratelimit.data.utils.RateLimitKeyValueCache;
+import com.srichell.microservices.ratelimit.data.utils.RateLimitLocalFSDataStore;
+import com.srichell.microservices.ratelimit.data.utils.RateLimitS3DataStore;
 import com.srichell.microservices.ratelimit.interfaces.IAppState;
+import com.srichell.microservices.ratelimit.interfaces.IKeyValueDataCache;
 import com.srichell.microservices.ratelimit.interfaces.IPersistentDelimitedDataStore;
+import com.srichell.microservices.ratelimit.pojos.CityId;
+import com.srichell.microservices.ratelimit.pojos.RoomInfo;
 import com.srichell.microservices.ratelimit.rest.apis.AbstractRestResource;
 import com.srichell.microservices.ratelimit.rest.apis.RestResources;
 import com.srichell.microservices.ratelimit.spring.constants.CommonBeanNames;
@@ -25,8 +32,7 @@ import java.util.List;
 @ComponentScan({ "com.target..microservices.facetranking.*" })
 public class RateLimitSpringConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitSpringConfig.class);
-    private static final int FACETRANKING_QUERY_DATA_CONFIG_INDEX = 0;
-    private static final int FACETRANKING_CATEGORY_DATA_CONFIG_INDEX = 1;
+    private static final int HOTEL_DB_CONFIG_INDEX = 0;
 
     @Autowired
     @Qualifier(CommonBeanNames.APP_STATE)
@@ -34,20 +40,20 @@ public class RateLimitSpringConfig {
 
     @Autowired
     @Qualifier(RateLimitBeanNames.RATE_LIMIT_DATA_LOADER)
-    private RateLimitDataLoader rateLimitDataLoader
+    private RateLimitDataLoader rateLimitDataLoader;
 
 
     @Bean(name = RateLimitBeanNames.RATE_LIMIT_APP_STATE)
     @DependsOn(CommonBeanNames.APP_STATE)
     @Scope("singleton")
-    public FacetRankingAppState getAppState() {
-        return (FacetRankingAppState) appState;
+    public RateLimitAppState getAppState() {
+        return (RateLimitAppState) appState;
     }
 
     @Bean(name = CommonBeanNames.APP_STATE)
     @Scope("singleton")
     public IAppState AppState() {
-        return new FacetRankingAppState();
+        return new RateLimitAppState();
     }
 
     @Bean(name = CommonBeanNames.REST_RESOURCES)
@@ -55,7 +61,7 @@ public class RateLimitSpringConfig {
     public RestResources restResources() throws InterruptedException {
         List<AbstractRestResource> resourcesList = new ArrayList<AbstractRestResource>();
         resourcesList.add(
-                new FacetRankingResource(getAppState(), getQueryDataLoader(), getCategoryDataLoader())
+                new RateLimitRestResource(getAppState(), getRateLimitDataLoader())
         );
         return new RestResources(resourcesList);
     }
@@ -63,27 +69,26 @@ public class RateLimitSpringConfig {
 
     @Bean(name = RateLimitBeanNames.RATE_LIMIT_CATEGORY_DATA_LOADER)
     @DependsOn({ RateLimitBeanNames.RATE_LIMIT_APP_STATE})
-    public FacetRankingCategoryDataLoader categoryDataLoader() throws InstantiationException, IllegalAccessException {
-        return new FacetRankingCategoryDataLoader(getCategoryDataStore(), getCategoryDataCache());
+    public RateLimitDataLoader rateLimitDataLoader() throws InstantiationException, IllegalAccessException {
+        return new RateLimitDataLoader(getRateLimitDataStore(), getRateLimitDataCache());
     }
 
 
 
 
-    private FacetRankingCategoryDataLoader getCategoryDataLoader() {
-        return facetRankingCategoryDataLoader;
+    private RateLimitDataLoader getRateLimitDataLoader() {
+        return rateLimitDataLoader;
     }
 
-    private IKeyValueDataCache<Query,FacetsData> getQueryDataCache() {
-        return new FacetRankingQueryCache();
+    private IKeyValueDataCache<CityId,RoomInfo> getRateLimitDataCache() {
+        return new RateLimitKeyValueCache();
     }
 
-    private IKeyValueDataCache<Category,FacetsData> getCategoryDataCache() {
-        return new FacetRankingCategoryCache();
-    }
 
-    private IPersistentDelimitedDataStore getCategoryDataStore() throws IllegalAccessException, InstantiationException {
-        DataConfig dataConfig = getAppState().getAppConfig().getDataConfigs().get(FACETRANKING_CATEGORY_DATA_CONFIG_INDEX);
+    private IPersistentDelimitedDataStore getRateLimitDataStore() throws IllegalAccessException, InstantiationException {
+        DataConfig dataConfig = getAppState().
+                                    getAppConfig().
+                                    getDataConfigs().get(HOTEL_DB_CONFIG_INDEX);
 
         return  ((IPersistentDelimitedDataStore) PersistentDataStores.getByName(dataConfig.getDataSourceType()).
                 getDataStore().
@@ -94,8 +99,8 @@ public class RateLimitSpringConfig {
 
 
     private enum PersistentDataStores {
-        S3_DATASOURCE("s3", FacetRankingS3DataStore.class),
-        LOCAL_FS_DATASOURCE("fs", FacetRankingLocalFSDataStore.class);
+        S3_DATASOURCE("s3", RateLimitS3DataStore.class),
+        LOCAL_FS_DATASOURCE("fs", RateLimitLocalFSDataStore.class);
 
         PersistentDataStores(String type, Class<?> dataStore) {
             this.type = type;

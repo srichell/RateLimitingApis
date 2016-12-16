@@ -13,7 +13,7 @@ public class RateLimitAppState extends AbstractAppState {
     private RateLimitAppConfig appConfig;
 
 
-    public RateLimitAppConfig getAppConfiguration() {
+    public RateLimitAppConfig getAppConfig() {
         return appConfig;
     }
 
