@@ -1,0 +1,80 @@
+# Spring profile that injects the Beans dyanamically
+springProfileNames:
+  - RateLimitSpringProfile
+  - CommonSpringProfile
+  - DefaultHealthCheck
+# Fully qualified path (including the Package) of the
+# Class that injects beans for this application.
+springProfileClasses:
+  - com.srichell.microservices.ratelimit.spring.config.CommonSpringConfig
+  - com.srichell.microservices.ratelimit.spring.config.DefaultHealthCheckSpringConfig
+  - com.srichell.microservices.ratelimit.spring.config.RateLimitSpringConfig
+
+threadPoolEnabled: true
+threadPoolConfigList:
+  - poolName: ApiThreadPool
+    poolStartSize: 10
+    poolMaxSize: 50
+    keepAliveTime: 1000
+    queueStartSize: 10
+
+
+# Fully qualified path (including the Package) of the
+# Class which holds the values from the App Configuration YAML file.
+appConfigClass: com.srichell.microservices.ratelimit.app.config.RateLimitAppConfig
+
+# Fully qualified path (including the Package) of the
+# Class which holds the values from the App Configuration YAML file. This class must support a
+# default Constructor
+metricsClass: com.srichell.microservices.ratelimit.metrics.RateLimitMetricRegistry
+
+dataConfigs:
+  - dataSourceType: fs
+    #dataSourceType: s3
+    localConfig:
+      localDir: /tmp
+      localFileName: hotelsDB
+    s3Config: null
+
+
+server:
+  applicationConnectors:
+    - port: 8080
+      type: http
+  adminConnectors:
+    - port: 8081
+      type: http
+  requestLog:
+    appenders:
+      - type: file
+        threshold: INFO
+        logFormat: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg %n"
+        currentLogFilename: /tmp/access.log
+        archivedLogFilenamePattern: /tmp/access-%d{yyyy-MM-dd}.log.gz
+        archivedFileCount: 14
+        timeZone: UTC
+
+metrics:
+  reporters:
+    - type: log #SLF4j Reporter
+      durationUnit: milliseconds
+      rateUnit: seconds
+      frequency: 60 seconds
+      logger: metrics
+      markerName: HelloWorld
+
+
+
+logging:
+  level: INFO
+  loggers:
+    com.srichell: DEBUG
+    metrics: INFO
+  appenders:
+    - type: file
+      threshold: DEBUG
+      logFormat: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg %n"
+      currentLogFilename: /tmp/app.log
+      archivedLogFilenamePattern: /tmp/app-%d{yyyy-MM-dd}.log.gz
+      archivedFileCount: 10
+      timeZone: UTC
