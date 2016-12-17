@@ -1,5 +1,6 @@
 package com.srichell.microservices.ratelimit.interfaces;
 
+import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.pojos.ApiKey;
 
 /**
@@ -8,4 +9,5 @@ import com.srichell.microservices.ratelimit.pojos.ApiKey;
 public interface RateLimitAlgorithm {
     public boolean isRateLimitViolated(ApiKey apiKey);
     public boolean penaliseApiKey(ApiKey apiKey);
+    public RateLimitAlgorithm setAppState(RateLimitAppState appState);
 }

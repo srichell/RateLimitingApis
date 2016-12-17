@@ -26,7 +26,7 @@ public abstract class AbstractRestResource {
      *
      * @throws InterruptedException
      */
-    public void init() throws InterruptedException {
+    public void init() throws InterruptedException, IllegalAccessException, InstantiationException {
 
     }
 

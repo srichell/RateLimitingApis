@@ -4,6 +4,7 @@ import com.codahale.metrics.Timer;
 import com.srichell.microservices.ratelimit.algorithms.RateLimitTokenBucketAlgorithm;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.data.utils.RateLimitDataLoader;
+import com.srichell.microservices.ratelimit.interfaces.RateLimitAlgorithm;
 import com.srichell.microservices.ratelimit.spring.config.RateLimitSpringConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ public class RateLimitRestResource extends AbstractRestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitRestResource.class);
     private final RateLimitAppState rateLimitAppState;
     private final RateLimitDataLoader rateLimitDataLoader;
+    private RateLimitAlgorithm rateLimitAlgorithm;
+
 
     public RateLimitRestResource(RateLimitAppState appState, RateLimitDataLoader rateLimitDataLoader) {
         super(appState);
@@ -46,10 +49,25 @@ public class RateLimitRestResource extends AbstractRestResource {
         return LOGGER;
     }
 
+    private RateLimitAlgorithm getRateLimitAlgorithm() {
+        return rateLimitAlgorithm;
+    }
+
+    public RateLimitRestResource setRateLimitAlgorithm(RateLimitAlgorithm rateLimitAlgorithm) {
+        this.rateLimitAlgorithm = rateLimitAlgorithm;
+        return this;
+    }
+
     @Override
-    public void init() throws InterruptedException {
+    public void init() throws InterruptedException, IllegalAccessException, InstantiationException {
         super.init();
         loadDataInternal();
+        RateLimitAlgorithm rateLimitAlgorithm = (RateLimitAlgorithm) RateLimitAlgorithms.getByType(
+                                                    getRateLimitAppState().getAppConfig().getRateLimitAlgorithm()
+                                                ).getAlgorithmImplClass().newInstance();
+        this.setRateLimitAlgorithm(
+                rateLimitAlgorithm.setAppState(getRateLimitAppState())
+        );
     }
 
     private void loadDataInternal() throws InterruptedException {
@@ -95,6 +113,17 @@ public class RateLimitRestResource extends AbstractRestResource {
             ) throws InterruptedException {
         int numRetries = 0;
         Timer.Context timer = getRateLimitAppState().getAppMetricRegistry().getFindHotelByCityIdQueryTime().time();
+        /*
+         * Scheduling variances can occur causing threads to be scheduled milliseconds apart. So, carry out the
+         * Rules Check inline. If the Rules pass, then process the request asynchronously.
+         */
+        RateLimitRulesCheckResult result = new RateLimitRulesCheck().check();
+
+        if(!result.isPassed()) {
+            asyncResponse.resume(result.getResponse());
+            return;
+        }
+
         while(numRetries < MAX_RETRIES) {
             try {
                 getRateLimitAppState().
@@ -124,8 +153,33 @@ public class RateLimitRestResource extends AbstractRestResource {
         }
     }
 
-    private static class RulesCheck {
+    private class RateLimitRulesCheck {
+        private RateLimitRestResource getOuterClass() {
+            return RateLimitRestResource.this;
+        }
 
+        public RateLimitRulesCheckResult check() {
+            return new RateLimitRulesCheckResult(true, Response.ok().build());
+        }
+
+    }
+
+    private static class RateLimitRulesCheckResult {
+        private final boolean passed;
+        private final Response response;
+
+        public RateLimitRulesCheckResult(boolean passed, Response response) {
+            this.passed = passed;
+            this.response = response;
+        }
+
+        public boolean isPassed() {
+            return passed;
+        }
+
+        public Response getResponse() {
+            return response;
+        }
     }
 
     private enum RateLimitAlgorithms {

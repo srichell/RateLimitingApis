@@ -28,4 +28,11 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
     public boolean penaliseApiKey(ApiKey apiKey) {
         return false;
     }
+
+    @Override
+    public RateLimitAlgorithm setAppState(RateLimitAppState appState) {
+        this.rateLimitAppState = appState;
+        return this;
+    }
+
 }
