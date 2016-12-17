@@ -66,7 +66,7 @@ metrics:
     - type: log #SLF4j Reporter
       durationUnit: milliseconds
       rateUnit: seconds
-      frequency: 60 seconds
+      frequency: 600 seconds
       logger: metrics
       markerName: HelloWorld
 

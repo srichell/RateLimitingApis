@@ -34,4 +34,11 @@ public class ApiKey {
     public int hashCode() {
         return getApiKey().hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "ApiKey{" +
+                "apiKey='" + apiKey + '\'' +
+                '}';
+    }
 }

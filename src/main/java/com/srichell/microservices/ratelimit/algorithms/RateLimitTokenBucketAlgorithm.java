@@ -4,6 +4,9 @@ import com.srichell.microservices.ratelimit.app.config.RateLimitConfig;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.interfaces.RateLimitAlgorithm;
 import com.srichell.microservices.ratelimit.pojos.ApiKey;
+import com.srichell.microservices.ratelimit.rest.apis.RateLimitRestResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +20,13 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
     private static final int NUM_MILLI_SECONDS_PER_SECOND = 1000;
     private RateLimitAppState rateLimitAppState;
     private Map<ApiKey, RateLimitCreditBalance> existingRateLimits = new HashMap<ApiKey, RateLimitCreditBalance>();
+    private Map<ApiKey, Long> blackListedApiKeys = new HashMap<ApiKey, Long>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitTokenBucketAlgorithm.class);
+
+
+    public static Logger getLOGGER() {
+        return LOGGER;
+    }
 
     public RateLimitTokenBucketAlgorithm() {
     }
@@ -34,6 +44,10 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
         );
     }
 
+    public Map<ApiKey, Long> getBlackListedApiKeys() {
+        return blackListedApiKeys;
+    }
+
     @Override
     public boolean isRateLimitViolated(ApiKey apiKey, RateLimitConfig rateLimitConfig) {
 
@@ -47,8 +61,8 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
 
         /*
          * We calculate the num requests remaining based on the past history.
-         * Users do not get extra credit for unused past. The best they get is max
-         * number of requests per minute.
+         * Users do not get extra credit for unused past. The best they get
+         * for unused credit is max number of requests per minute.
          */
         long requestsRemaining = Math.min(
                 rateLimitConfig.getMaxRequestsPerMinute(),
@@ -56,8 +70,24 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
         );
 
         if(requestsRemaining == 0) {
+            /*
+             * Api Key needs to be blacklisted. Add it to the Blacklist
+             */
+            getLOGGER().error("Blacklisting apiKey {} for {} minutes", apiKey, rateLimitConfig.getRateViolationPenaltyMinutes());
+            getBlackListedApiKeys().put(apiKey, System.currentTimeMillis());
             return true;
         }
+
+        if((getBlackListedApiKeys().get(apiKey) != null) &&
+            ((diffInSeconds(System.currentTimeMillis(), getBlackListedApiKeys().get(apiKey))/NUM_SECONDS_PER_MINUTE) < rateLimitConfig.getRateViolationPenaltyMinutes())) {
+            /*
+             * This blacklisted ApiKey again violated the rate limit. Renew its blacklist
+             */
+            getLOGGER().error("Renewing Blacklisted apiKey {} for another {} minutes", apiKey, rateLimitConfig.getRateViolationPenaltyMinutes());
+            getBlackListedApiKeys().put(apiKey, System.currentTimeMillis());
+            return true;
+        }
+
         newCreditBalance.setNumRequestsPerMinute(requestsRemaining - 1).
                           setLastReceivedTimeStamp(System.currentTimeMillis());
         getExistingRateLimits().put(apiKey, newCreditBalance);
@@ -89,14 +119,6 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
         this.rateLimitAppState = appState;
         return this;
     }
-
-
-
-
-
-
-
-
 
 
     private static class RateLimitCreditBalance {
