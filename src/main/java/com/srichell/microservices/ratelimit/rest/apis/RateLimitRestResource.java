@@ -1,8 +1,10 @@
 package com.srichell.microservices.ratelimit.rest.apis;
 
 import com.codahale.metrics.Timer;
+import com.srichell.microservices.ratelimit.algorithms.RateLimitTokenBucketAlgorithm;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.data.utils.RateLimitDataLoader;
+import com.srichell.microservices.ratelimit.spring.config.RateLimitSpringConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,6 +124,39 @@ public class RateLimitRestResource extends AbstractRestResource {
         }
     }
 
+    private static class RulesCheck {
 
+    }
+
+    private enum RateLimitAlgorithms {
+        TOKEN_BUCKET("TokenBucket", RateLimitTokenBucketAlgorithm.class),
+        ;
+
+        RateLimitAlgorithms(String type, Class<?> algorithmImplClass) {
+            this.type = type;
+            this.algorithmImplClass = algorithmImplClass;
+        }
+
+        private String type;
+        private Class<?> algorithmImplClass;
+
+        public String getType() {
+            return type;
+        }
+
+
+        public Class<?> getAlgorithmImplClass() {
+            return algorithmImplClass;
+        }
+
+        public static RateLimitAlgorithms getByType(String algoType) {
+            for (RateLimitAlgorithms algo : RateLimitAlgorithms.values()) {
+                if (algo.getType().equalsIgnoreCase(algoType)) {
+                    return algo;
+                }
+            }
+            return null;
+        }
+    }
 
 }

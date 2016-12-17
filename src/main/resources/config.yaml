@@ -37,9 +37,9 @@ dataConfigs:
     s3Config: null
 
 
+rateLimitAlgorithm: TokenBucket
 rateLimitConfigs:
   - blessedApiKey: abcd
-    rateLimitAlgorithm: TokenBucket
     requestsPerMinute: 1
     rateViolationPenaltyMinutes: 5
 
