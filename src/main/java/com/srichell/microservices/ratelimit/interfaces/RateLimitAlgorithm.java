@@ -11,4 +11,5 @@ public interface RateLimitAlgorithm {
     public boolean isRateLimitViolated(ApiKey apiKey, RateLimitConfig rateLimitConfig);
     public boolean penaliseApiKey(ApiKey apiKey);
     public RateLimitAlgorithm setAppState(RateLimitAppState appState);
+    public void resetCreditBalance(ApiKey apiKey, Long numRequestsPerMinute);
 }

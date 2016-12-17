@@ -17,7 +17,7 @@ public class RateLimitConfig {
     private int rateViolationPenaltyMinutes;
 
     @JsonProperty
-    private int requestsPerMinute;
+    private long requestsPerMinute;
 
     public String getBlessedApiKey() {
         return blessedApiKey;
@@ -37,7 +37,7 @@ public class RateLimitConfig {
         return this;
     }
 
-    public int getRequestsPerMinute() {
+    public Long getMaxRequestsPerMinute() {
         return requestsPerMinute;
     }
 

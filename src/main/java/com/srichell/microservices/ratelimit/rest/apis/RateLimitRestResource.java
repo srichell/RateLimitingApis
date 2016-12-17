@@ -104,6 +104,21 @@ public class RateLimitRestResource extends AbstractRestResource {
         ).build();
     }
 
+
+    @GET
+    @Path("/credit")
+    public Response resetCreditBalance(
+            @QueryParam("apikey")     String apiKey,
+            @QueryParam("credit")     long requestsPerMin
+    ) throws InterruptedException {
+        RateLimitRulesCheckResult result = getRulesCheck().apiKeyCheck(apiKey);
+        Response response = result.getResponse();
+        if(result.isPassed()) {
+            getRateLimitAlgorithm().resetCreditBalance(new ApiKey(apiKey), requestsPerMin);
+        }
+        return response;
+    }
+
     /**
      * This is an Async API. Processing is taken care of in the context of another thread and the same thread
      * sends the response When the Response is ready,
@@ -199,6 +214,24 @@ public class RateLimitRestResource extends AbstractRestResource {
 
         private RateLimitRestResource getOuterClass() {
             return RateLimitRestResource.this;
+        }
+
+        public RateLimitRulesCheckResult apiKeyCheck(String key) {
+            ApiKey apiKey = new ApiKey(key);
+            /*
+             * First check for API Key validity
+             */
+            Response.ResponseBuilder builder = Response.ok();
+            boolean checkPassed = true;
+            String errorMessage = "SUCCESS";
+            if((getBlessedApiKeyInfoMap().get(apiKey)) == null) {
+                // Key not valid.
+                checkPassed = false;
+                builder =  Response.status(Response.Status.UNAUTHORIZED);
+                errorMessage = String.format( "%s %s", "UnAuthorized API key", apiKey);
+            }
+
+            return new RateLimitRulesCheckResult(checkPassed, builder.entity(errorMessage).build());
         }
 
         public RateLimitRulesCheckResult check(String key) {
