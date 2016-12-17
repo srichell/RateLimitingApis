@@ -111,4 +111,60 @@ Tests Done
          {"hotelId":14,"roomType":"SWEET_SUITE_ROOM","price":25000.0},
          {"hotelId":15,"roomType":"DELUXE_ROOM","price":900.0},
          {"hotelId":18,"roomType":"SWEET_SUITE_ROOM","price":5300.0}]}
-         
+   
+5. To see whether a renewal of credit can bring a blacklisted apiKey out of the blacklist
+
+acbc32a5d59d ~/workspace/WhereIsMyDriver_Tests>curl 'localhost:8080/v1/hotels/rooms?apikey=abcd&city=Bangkok' ; curl -v 'localhost:8080/v1/hotels/rooms?apikey=abcd&city=Bangkok'; curl -X POST 'localhost:8080/v1/hotels/credit?apikey=abcd&credit=10'; curl -v 'localhost:8080/v1/hotels/rooms?apikey=abcd&city=Bangkok'
+
+
+        {"Hotel Rooms":
+         [{"hotelId":1,"roomType":"DELUXE_ROOM","price":1000.0},
+         {"hotelId":6,"roomType":"SUPERIOR_ROOM","price":2000.0},
+         {"hotelId":8,"roomType":"SUPERIOR_ROOM","price":2400.0},
+         {"hotelId":11,"roomType":"DELUXE_ROOM","price":60.0},
+         {"hotelId":14,"roomType":"SWEET_SUITE_ROOM","price":25000.0},
+         {"hotelId":15,"roomType":"DELUXE_ROOM","price":900.0},
+         {"hotelId":18,"roomType":"SWEET_SUITE_ROOM","price":5300.0}]}
+   
+* Connected to localhost (::1) port 8080 (#0)
+> GET /v1/hotels/rooms?apikey=abcd&city=Bangkok HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/7.43.0
+> Accept: */*
+> 
+< HTTP/1.1 429 
+< Date: Sat, 17 Dec 2016 17:39:54 GMT
+< Content-Type: text/plain
+< Content-Length: 19
+< 
+* Connection #0 to host localhost left intact
+RATE LIMIT EXCEEDED
+
+
+
+
+
+
+*   Trying ::1...
+* Connected to localhost (::1) port 8080 (#0)
+> GET /v1/hotels/rooms?apikey=abcd&city=Bangkok HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/7.43.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Sat, 17 Dec 2016 17:39:54 GMT
+< Content-Type: text/plain
+< Vary: Accept-Encoding
+< Content-Length: 411
+< 
+* Connection #0 to host localhost left intact
+        {"Hotel Rooms":
+         [{"hotelId":1,"roomType":"DELUXE_ROOM","price":1000.0},
+         {"hotelId":6,"roomType":"SUPERIOR_ROOM","price":2000.0},
+         {"hotelId":8,"roomType":"SUPERIOR_ROOM","price":2400.0},
+         {"hotelId":11,"roomType":"DELUXE_ROOM","price":60.0},
+         {"hotelId":14,"roomType":"SWEET_SUITE_ROOM","price":25000.0},
+         {"hotelId":15,"roomType":"DELUXE_ROOM","price":900.0},
+         {"hotelId":18,"roomType":"SWEET_SUITE_ROOM","price":5300.0}]}
+   

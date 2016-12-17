@@ -41,7 +41,7 @@ public class RateLimitConfig {
         return requestsPerMinute;
     }
 
-    public RateLimitConfig setRequestsPerMinute(int requestsPerMinute) {
+    public RateLimitConfig setRequestsPerMinute(Long requestsPerMinute) {
         this.requestsPerMinute = requestsPerMinute;
         return this;
     }

@@ -105,7 +105,7 @@ public class RateLimitRestResource extends AbstractRestResource {
     }
 
 
-    @GET
+    @POST
     @Path("/credit")
     public Response resetCreditBalance(
             @QueryParam("apikey")     String apiKey,

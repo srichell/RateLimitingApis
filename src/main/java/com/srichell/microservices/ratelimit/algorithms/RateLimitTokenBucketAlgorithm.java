@@ -4,7 +4,6 @@ import com.srichell.microservices.ratelimit.app.config.RateLimitConfig;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.interfaces.RateLimitAlgorithm;
 import com.srichell.microservices.ratelimit.pojos.ApiKey;
-import com.srichell.microservices.ratelimit.rest.apis.RateLimitRestResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +111,13 @@ public class RateLimitTokenBucketAlgorithm implements RateLimitAlgorithm {
     public void resetCreditBalance(ApiKey apiKey, Long numRequestsPerMinute) {
         RateLimitCreditBalance newCreditBalance = new RateLimitCreditBalance(numRequestsPerMinute, System.currentTimeMillis());
         getExistingRateLimits().put(apiKey, newCreditBalance);
+        removeIfBlacklisted(apiKey);
+    }
+
+    private void removeIfBlacklisted(ApiKey apiKey) {
+        if(getBlackListedApiKeys().get(apiKey) != null) {
+            getBlackListedApiKeys().remove(apiKey);
+        }
     }
 
     @Override
