@@ -7,7 +7,6 @@ import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.data.utils.RateLimitDataLoader;
 import com.srichell.microservices.ratelimit.interfaces.RateLimitAlgorithm;
 import com.srichell.microservices.ratelimit.pojos.ApiKey;
-import com.srichell.microservices.ratelimit.spring.config.RateLimitSpringConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,7 @@ public class RateLimitRestResource extends AbstractRestResource {
     private static String ASC_SORT_ORDER = "ASC";
     private static String DESC_SORT_ORDER = "DESC";
     private static final long DATA_LOAD_CHECK_INTERVAL_MILLIS = 500L;
+    private static int TOO_MANY_REQUESTS = 429;
     private static int MAX_RETRIES = 3;
     private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitRestResource.class);
     private final RateLimitAppState rateLimitAppState;
@@ -168,6 +168,7 @@ public class RateLimitRestResource extends AbstractRestResource {
     }
 
     private class RateLimitRulesCheck {
+
         List<ApiKey> blessedApiKeys = new ArrayList<ApiKey>();
         Map<ApiKey, RateLimitConfig> blessedApiKeyInfoMap = new HashMap<ApiKey, RateLimitConfig>();
 
@@ -200,18 +201,29 @@ public class RateLimitRestResource extends AbstractRestResource {
             return RateLimitRestResource.this;
         }
 
-        public RateLimitRulesCheckResult check(String apiKey) {
+        public RateLimitRulesCheckResult check(String key) {
+            ApiKey apiKey = new ApiKey(key);
             /*
              * First check for API Key validity
              */
             Response.ResponseBuilder builder = Response.ok();
             boolean checkPassed = true;
             String errorMessage = "SUCCESS";
-            if((getBlessedApiKeyInfoMap().get(new ApiKey(apiKey))) == null) {
+            if((getBlessedApiKeyInfoMap().get(apiKey)) == null) {
                 // Key not valid.
                 checkPassed = false;
                 builder =  Response.status(Response.Status.UNAUTHORIZED);
                 errorMessage = String.format( "%s %s", "UnAuthorized API key", apiKey);
+            }
+
+            /*
+             * Now check for Rate Limit Violations
+             */
+            if(getRateLimitAlgorithm().isRateLimitViolated(apiKey, getBlessedApiKeyInfoMap().get(apiKey))) {
+                // Key not valid.
+                checkPassed = false;
+                builder =  Response.status(TOO_MANY_REQUESTS);
+                errorMessage = String.format( "RATE LIMIT EXCEEDED");
             }
 
             return new RateLimitRulesCheckResult(checkPassed, builder.entity(errorMessage).build());
