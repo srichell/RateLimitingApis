@@ -1,10 +1,71 @@
 # RateLimitingApis
-Rate Limiting an API call, based on an API key
+
+GIT Repo for Rate Limiting an API call, based on an API key. I used the following Tech Stack.
+
+1. Java for Source Code development. 
+2. Dropwizard for Web services. 
+        DropWizard implements a lightweight Jetty Container which is a reference implementation for Jax-RS.
+        Implementing Asynchronous non blocking APIs is easy using Drop Wizard (for me).
+        Dropwizard provides a comprehensive Metrics Library with built-in reporters.
+3. Token Bucket as the algorithm for Retalimiting.
+4. Spring for Inversion of Control. Using spring gives me the capability to associate disassociate
+   a component using a config.
+5. TestNg for Unit tests. TestNG enables testing multi threaded code.
+6. Jacoco for Generating Unit test coverage reports and SONAR for visualization. (SONAR not
+   tested)
+
+This GIT repo is fully functional and can be deployed on any Linux based box.
+
+InfraStructure Requirements to run code
+---------------------------------------
+1. Java Version 1.7 or higher
+2. Linux box with any flavor of linux.
+
+How to Run
+-----------
+1. mvn test to run tests
+2. mvn clean install to compile the Jar.
+3. java -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Xmx4096m -Xms4096m -jar RateLimiting-0.0.1-SNAPSHOT.jar config.yaml &
 
 
 
-Tests Done
-----------
+   Thread Safety
+   -------------
+
+   The code is inherently thread safe because there are not too many shared data structures
+   that are read and written to from context of different threads.  
+
+   Metrics
+   -------
+   We use Dropwizard metrics to get both JVM level metrics and App level metrics. While these
+   metrics can be wired into Graphite/Grafana, I have tested the metrics using :
+        1. SLF4J reporter
+        2. Admin Servelet (curl http://localhost:8081/metrics?pretty=true)
+
+   HealthChecks
+   ------------
+   HealthChecks provide a way for a caller to know whether the service is running before making
+   a call. Our service provide a basic Ping HealthCheck that can be extended to a more
+   comprehensive HealthCheck Solution.
+
+   Admin Servelet (curl http://localhost:8081/healthcheck?pretty=true)
+
+   Thread Dumps
+   ------------
+   The service gives you a REST API to pull thread dumps without logging into a Box. Just do a
+   curl http://localhost:8081/threads to get thread Dumps.
+
+   Tests
+   -----
+   Tests are two fold.
+
+   1. Unit Tests - Unit tests are written using TestNG test cases and are under test/main/java. You can run them
+      using using mvn test (Not populated yet)
+   2. Functional Tests - See below.
+
+
+Functionl Tests Done
+---------------------
 1. Happy Case - Get Info by City
    curl 'localhost:8080/v1/hotels/rooms?apikey=abcd&city=Bangkok' 
    {"Hotel Rooms":
@@ -168,3 +229,14 @@ RATE LIMIT EXCEEDED
          {"hotelId":15,"roomType":"DELUXE_ROOM","price":900.0},
          {"hotelId":18,"roomType":"SWEET_SUITE_ROOM","price":5300.0}]}
    
+   
+      Test Automation and Report Generation
+      -------------------------------------
+   
+      All of these tests can be plugged into Jenkins server to be automatically run. (Not tested yet)
+   
+      When you run "mvn test", Test Coverage reports are automatically generated. For detailed coverage reports,
+      please look at $ROOT/target/jacoco/jacoco.exec/jacoco-ut/index.html. A SONAR server can be setup for
+      Graphical visualization.
+      
+      

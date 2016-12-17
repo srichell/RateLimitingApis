@@ -15,7 +15,6 @@
         <dropwizard.version>0.8.1</dropwizard.version>
         <dropwizard.metrics.version>3.1.2</dropwizard.metrics.version>
         <spring.version>4.2.3.RELEASE</spring.version>
-        <hazelcast.version>3.7.3</hazelcast.version>
         <sonar.version>5.1</sonar.version>
         <jacoco.version>0.7.5.201505241946</jacoco.version>
         <jmockit.version>1.21</jmockit.version>
@@ -34,11 +33,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast</artifactId>
-            <version>${hazelcast.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jacoco</groupId>
