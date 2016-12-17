@@ -1,6 +1,7 @@
 package com.srichell.microservices.ratelimit.rest.apis;
 
 import com.codahale.metrics.Timer;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.srichell.microservices.ratelimit.algorithms.RateLimitTokenBucketAlgorithm;
 import com.srichell.microservices.ratelimit.app.config.RateLimitConfig;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
@@ -105,15 +106,23 @@ public class RateLimitRestResource extends AbstractRestResource {
     }
 
 
+    /*
+     * Reset the Credit Balance and rate limit violation penalty to new values
+     * than the global defaults, for this API key.
+     *
+     * Remember, these values are ephemeral ie, not persisted
+     */
     @POST
     @Path("/credit")
     public Response resetCreditBalance(
             @QueryParam("apikey")     String apiKey,
-            @QueryParam("credit")     long requestsPerMin
+            @QueryParam("credit")     long requestsPerMin,
+            @DefaultValue("5") @QueryParam("violationpenalty") int rateViolationPenaltyMinutes
     ) throws InterruptedException {
         RateLimitRulesCheckResult result = getRulesCheck().apiKeyCheck(apiKey);
         Response response = result.getResponse();
         if(result.isPassed()) {
+            getRulesCheck().updateBlessesKeyInfo(apiKey, rateViolationPenaltyMinutes, requestsPerMin);
             getRateLimitAlgorithm().resetCreditBalance(new ApiKey(apiKey), requestsPerMin);
         }
         return response;
@@ -186,6 +195,14 @@ public class RateLimitRestResource extends AbstractRestResource {
 
         List<ApiKey> blessedApiKeys = new ArrayList<ApiKey>();
         Map<ApiKey, RateLimitConfig> blessedApiKeyInfoMap = new HashMap<ApiKey, RateLimitConfig>();
+
+        public void updateBlessesKeyInfo (String key, int rateViolationPenaltyMinutes, long requestsPerMinute) {
+            RateLimitConfig newRateLimitConfig =
+                    new RateLimitConfig(getBlessedApiKeyInfoMap().get(new ApiKey(key))).
+                            setRateViolationPenaltyMinutes(rateViolationPenaltyMinutes).
+                            setRequestsPerMinute(requestsPerMinute);
+            getBlessedApiKeyInfoMap().put(new ApiKey(key), newRateLimitConfig);
+        }
 
         /**
          * Build a hash map of valid API keys for a faster lookup.

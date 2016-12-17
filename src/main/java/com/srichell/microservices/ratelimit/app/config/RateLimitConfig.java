@@ -19,6 +19,17 @@ public class RateLimitConfig {
     @JsonProperty
     private long requestsPerMinute;
 
+
+    public RateLimitConfig() {
+    }
+
+    public RateLimitConfig(RateLimitConfig that) {
+        this.setRateLimitAlgorithm(that.getRateLimitAlgorithm()).
+             setRateViolationPenaltyMinutes(that.getRateViolationPenaltyMinutes()).
+             setBlessedApiKey(that.getBlessedApiKey()).
+             setRequestsPerMinute(that.getMaxRequestsPerMinute());
+    }
+
     public String getBlessedApiKey() {
         return blessedApiKey;
     }
