@@ -14,6 +14,18 @@ public class RoomInfo {
         this.price = price;
     }
 
+    public long getHotelId() {
+        return hotelId;
+    }
+
+    public RoomType getRoomType() {
+        return roomType;
+    }
+
+    public float getPrice() {
+        return price;
+    }
+
     private enum RoomType {
         DELUXE_ROOM("Deluxe"),
         SUPERIOR_ROOM("Superior"),

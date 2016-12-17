@@ -18,6 +18,8 @@ import java.util.concurrent.RejectedExecutionException;
 @Path("/v1/hotels")
 public class RateLimitRestResource extends AbstractRestResource {
     private static String API_THREAD_POOL = "ApiThreadPool";
+    private static String ASC_SORT_ORDER = "ASC";
+    private static String DESC_SORT_ORDER = "DESC";
     private static final long DATA_LOAD_CHECK_INTERVAL_MILLIS = 500L;
     private static int MAX_RETRIES = 3;
     private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitRestResource.class);
@@ -68,15 +70,26 @@ public class RateLimitRestResource extends AbstractRestResource {
         ).build();
     }
 
+    /**
+     * This is an Async API. Processing is taken care of in the context of another thread and the same thread
+     * sends the response When the Response is ready,
+     *
+     * @param asyncResponse
+     * @param apiKey
+     * @param city
+     * @param sort
+     * @param sortOrder
+     * @throws InterruptedException
+     */
+
     @GET
     @Path("/rooms")
     public void getRoomsByCity(
                 @Suspended final AsyncResponse asyncResponse,
                 @QueryParam("apikey")     String apiKey,
                 @QueryParam("city")     String city,
-                @QueryParam("id") int hotelId,
                 @DefaultValue("false") @QueryParam("sort") boolean sort,
-                @DefaultValue("false") @QueryParam("sortOrder") String sortOrder
+                @DefaultValue("ASC") @QueryParam("sortOrder") String sortOrder
             ) throws InterruptedException {
         int numRetries = 0;
         Timer.Context timer = getRateLimitAppState().getAppMetricRegistry().getFindHotelByCityIdQueryTime().time();
@@ -88,8 +101,11 @@ public class RateLimitRestResource extends AbstractRestResource {
                         execute(
                                 new FindHotelsWorkItem(
                                         getRateLimitAppState(),
+                                        getRateLimitDataLoader().getKeyValueDataCache(),
                                         asyncResponse,
-                                        city, sort, sortOrder, timer)
+                                        city, sort,
+                                        sortOrder.equalsIgnoreCase("ASC") ? SortOrder.ASCENDING : SortOrder.DESCENDING,
+                                        timer)
                         );
                 return;
             } catch (RejectedExecutionException e) {
@@ -100,7 +116,7 @@ public class RateLimitRestResource extends AbstractRestResource {
                     timer.stop();
                     throw(e);
                 }
-                getLOGGER().error("updateDriverPosition() : Caught RejectedExecutionException. Retrying {} of {} ", numRetries, MAX_RETRIES);
+                getLOGGER().error("getRoomsByCity() : Caught RejectedExecutionException. Retrying {} of {} ", numRetries, MAX_RETRIES);
                 Thread.sleep(0l);
             }
         }
