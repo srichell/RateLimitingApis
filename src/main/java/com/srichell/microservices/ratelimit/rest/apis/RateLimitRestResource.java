@@ -2,9 +2,11 @@ package com.srichell.microservices.ratelimit.rest.apis;
 
 import com.codahale.metrics.Timer;
 import com.srichell.microservices.ratelimit.algorithms.RateLimitTokenBucketAlgorithm;
+import com.srichell.microservices.ratelimit.app.config.RateLimitConfig;
 import com.srichell.microservices.ratelimit.app.main.RateLimitAppState;
 import com.srichell.microservices.ratelimit.data.utils.RateLimitDataLoader;
 import com.srichell.microservices.ratelimit.interfaces.RateLimitAlgorithm;
+import com.srichell.microservices.ratelimit.pojos.ApiKey;
 import com.srichell.microservices.ratelimit.spring.config.RateLimitSpringConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,10 @@ import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
 /**
@@ -28,6 +34,8 @@ public class RateLimitRestResource extends AbstractRestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitRestResource.class);
     private final RateLimitAppState rateLimitAppState;
     private final RateLimitDataLoader rateLimitDataLoader;
+
+    private RateLimitRulesCheck rulesCheck;
     private RateLimitAlgorithm rateLimitAlgorithm;
 
 
@@ -35,6 +43,7 @@ public class RateLimitRestResource extends AbstractRestResource {
         super(appState);
         this.rateLimitAppState = appState;
         this.rateLimitDataLoader = rateLimitDataLoader;
+
     }
 
     private RateLimitAppState getRateLimitAppState() {
@@ -68,6 +77,11 @@ public class RateLimitRestResource extends AbstractRestResource {
         this.setRateLimitAlgorithm(
                 rateLimitAlgorithm.setAppState(getRateLimitAppState())
         );
+        this.rulesCheck = new RateLimitRulesCheck();
+    }
+
+    private RateLimitRulesCheck getRulesCheck() {
+        return rulesCheck;
     }
 
     private void loadDataInternal() throws InterruptedException {
@@ -117,7 +131,7 @@ public class RateLimitRestResource extends AbstractRestResource {
          * Scheduling variances can occur causing threads to be scheduled milliseconds apart. So, carry out the
          * Rules Check inline. If the Rules pass, then process the request asynchronously.
          */
-        RateLimitRulesCheckResult result = new RateLimitRulesCheck().check();
+        RateLimitRulesCheckResult result = getRulesCheck().check(apiKey);
 
         if(!result.isPassed()) {
             asyncResponse.resume(result.getResponse());
@@ -154,12 +168,53 @@ public class RateLimitRestResource extends AbstractRestResource {
     }
 
     private class RateLimitRulesCheck {
+        List<ApiKey> blessedApiKeys = new ArrayList<ApiKey>();
+        Map<ApiKey, RateLimitConfig> blessedApiKeyInfoMap = new HashMap<ApiKey, RateLimitConfig>();
+
+        /**
+         * Build a hash map of valid API keys for a faster lookup.
+         *
+         * Assumption. All the Valid API keys will fit into one single Map.
+         */
+        private void buildRateInfoMap() {
+            List<RateLimitConfig> rateLimitConfigs =
+                    getOuterClass().
+                            getRateLimitAppState().
+                            getAppConfig().
+                            getRateLimitConfigs();
+
+            for (RateLimitConfig rateLimitConfig : rateLimitConfigs) {
+                getBlessedApiKeyInfoMap().put(new ApiKey(rateLimitConfig.getBlessedApiKey()), rateLimitConfig);
+            }
+        }
+
+        private Map<ApiKey, RateLimitConfig> getBlessedApiKeyInfoMap() {
+            return blessedApiKeyInfoMap;
+        }
+
+        public RateLimitRulesCheck() {
+            buildRateInfoMap();
+        }
+
         private RateLimitRestResource getOuterClass() {
             return RateLimitRestResource.this;
         }
 
-        public RateLimitRulesCheckResult check() {
-            return new RateLimitRulesCheckResult(true, Response.ok().build());
+        public RateLimitRulesCheckResult check(String apiKey) {
+            /*
+             * First check for API Key validity
+             */
+            Response.ResponseBuilder builder = Response.ok();
+            boolean checkPassed = true;
+            String errorMessage = "SUCCESS";
+            if((getBlessedApiKeyInfoMap().get(new ApiKey(apiKey))) == null) {
+                // Key not valid.
+                checkPassed = false;
+                builder =  Response.status(Response.Status.UNAUTHORIZED);
+                errorMessage = String.format( "%s %s", "UnAuthorized API key", apiKey);
+            }
+
+            return new RateLimitRulesCheckResult(checkPassed, builder.entity(errorMessage).build());
         }
 
     }
