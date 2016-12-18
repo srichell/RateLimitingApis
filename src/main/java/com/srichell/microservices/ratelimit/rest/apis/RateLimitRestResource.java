@@ -264,13 +264,10 @@ public class RateLimitRestResource extends AbstractRestResource {
                 checkPassed = false;
                 builder =  Response.status(Response.Status.UNAUTHORIZED);
                 errorMessage = String.format( "%s %s", "UnAuthorized API key", apiKey);
-            }
-
-            /*
-             * Now check for Rate Limit Violations
-             */
-            if(getRateLimitAlgorithm().isRateLimitViolated(apiKey, getBlessedApiKeyInfoMap().get(apiKey))) {
-                // Key not valid.
+            } else if (getRateLimitAlgorithm().isRateLimitViolated(apiKey, getBlessedApiKeyInfoMap().get(apiKey))) {
+                /*
+                 * Now check for Rate Limit Violations
+                 */
                 checkPassed = false;
                 builder =  Response.status(TOO_MANY_REQUESTS);
                 errorMessage = String.format( "RATE LIMIT EXCEEDED");

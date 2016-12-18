@@ -100,7 +100,7 @@ public class RateLimitRestResourceTest {
 
 
     @Test
-    public void testGetRoomsByCity() throws Exception {
+    public void testGetRoomsByCityHappyCase() throws Exception {
         getRestResource().getRoomsByCity(
                 getAsyncResponse(), VALID_API_KEY, city, true, SortOrder.ASCENDING.name()
 
@@ -110,6 +110,35 @@ public class RateLimitRestResourceTest {
         Thread.sleep(1000);
         Assert.assertEquals(true, (getAsyncResponse().getResponse().getStatus() == 200));
 
+    }
+
+    @Test
+    public void testGetRoomsByCityErrorCaseInvalidApiKey() throws Exception {
+        getRestResource().getRoomsByCity(
+                getAsyncResponse(), INVALID_API_KEY_FOR_TEST, city, true, SortOrder.ASCENDING.name()
+
+        );
+
+        Assert.assertEquals(true, (getAsyncResponse().getResponse().getStatus() == 401));
+    }
+
+    @Test
+    public void testGetRoomsByCityErrorCaseRateLimitExhausted() throws Exception {
+        getRestResource().getRoomsByCity(
+                getAsyncResponse(), VALID_API_KEY, city, true, SortOrder.ASCENDING.name()
+
+        );
+        // Wait for the Async API threadpool thread to populate Response
+        Thread.sleep(1000);
+        // First expect a 200
+        Assert.assertEquals(true, (getAsyncResponse().getResponse().getStatus() == 200));
+
+        // Now we should hit a 429 - Rate Limit exceeded
+        getRestResource().getRoomsByCity(
+                getAsyncResponse(), VALID_API_KEY, city, true, SortOrder.ASCENDING.name()
+
+        );
+        Assert.assertEquals(true, (getAsyncResponse().getResponse().getStatus() == 429));
     }
 
     private static class MyAsyncResponse implements AsyncResponse {
